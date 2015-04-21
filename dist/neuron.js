@@ -16,7 +16,7 @@
 'use strict';
 
 var neuron = {
-  version: '7.1.2'
+  version: '7.2.0'
 };
 
 var NULL = null;
@@ -978,7 +978,12 @@ function load_js(src) {
     HEAD.removeChild(node);
   });
 
-  HEAD.insertBefore(node, HEAD.firstChild);
+  // A very tricky way to avoid several problems in iOS webviews, including:
+  // - webpage could not scroll down in iOS6
+  // - could not maintain vertial offset when history goes back.
+  setTimeout(function () {
+    HEAD.insertBefore(node, HEAD.firstChild);
+  }, 0);
 }
 
 
@@ -1132,7 +1137,7 @@ function load_module (module, callback) {
 // 4. require('./path')
 // -> deps on a
 // 5. require.async('a')
-// -> load a.main -> 
+// -> load a.main ->
 // 6. require.async('./path')
 // -> load a/path
 // 7. require.async('b/path'): the entry of a foreign module
@@ -1175,7 +1180,7 @@ function load_by_module(mod) {
 
   if (~loaded.indexOf(evidence)) {
     if (!isAsync) {
-      // If the main entrance of the package is already loaded 
+      // If the main entrance of the package is already loaded
       // and the current module is not an async module, skip loading.
       // see: declaration of `require.async`
       return;
@@ -1210,19 +1215,36 @@ function module_to_absolute_url(mod) {
   return module_id_to_absolute_url(id);
 }
 
+function module_id_to_md5(id){
+  var modname = id.split("/")[0];
+  var modpath = id.split(modname)[1];
+  if(modpath){
+    modpath = modpath.slice(1);
+  }
+  var md5 = NEURON_CONF.hash && NEURON_CONF.hash[modname] && NEURON_CONF.hash[modname][modpath];
+  return md5;
+}
+
 
 // server: 'http://localhost/abc',
 // -> http://localhost/abc/<relative>
 // @param {string} relative relative module url
 function module_id_to_absolute_url(id) {
+  var md5 = module_id_to_md5(id);
   var pathname = id.replace('@', '/');
   var base = NEURON_CONF.path;
   base || err('config.path must be specified');
   base = base.replace('{n}', pathname.length % 3 + 1);
 
+  if(md5){
+    var ext = pathname.match(/\.[\d\w]+$/)[0];
+    pathname = pathname.split(ext)[0] + "_" + md5 + ext;
+  }
+
   pathname += NEURON_CONF.cache === false
     ? '?f=' + timestamp
     : '';
+
 
   return base + pathname;
 }
@@ -1320,7 +1342,7 @@ neuron.ready = ready;
 // var neuron_loaded = [];
 var NEURON_CONF = neuron.conf = {
   loaded: [],
-  // If `config.tree` is not specified, 
+  // If `config.tree` is not specified,
   graph: {
     _: {}
   }
@@ -1332,12 +1354,12 @@ var SETTERS = {
   // The server where loader will fetch modules from
   // if use `'localhost'` as `base`, switch on debug mode
   'path': function(path) {
-    // Make sure 
+    // Make sure
     // - there's one and only one slash at the end
-    // - `conf.path` is a directory 
+    // - `conf.path` is a directory
     return path.replace(/\/*$/, '/');
   },
-
+  'hash': justReturn,
   'loaded': justReturn,
   'graph': justReturn,
   'cache': justReturn

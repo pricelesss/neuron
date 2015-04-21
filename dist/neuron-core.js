@@ -13,7 +13,7 @@
 'use strict';
 
 var neuron = {
-  version: '7.1.2'
+  version: '7.2.0'
 };
 
 var NULL = null;
