@@ -1199,7 +1199,8 @@ function load_by_module(mod) {
 }
 
 function append_md5_to_path(path, md5){
-  return path.replace(/\.js$/, "_" + md5 + ".js");
+  var ext = path.match(/\.[\w\d]+$/)[0];
+  return path.replace(new RegExp(ext + "$"), "_" + md5 + ext);
 }
 
 function module_to_absolute_url(mod) {
@@ -1230,8 +1231,7 @@ function module_to_absolute_url(mod) {
 }
 
 function get_md5(package_id, mod_path){
-  var md5 = NEURON_CONF.hash && NEURON_CONF.hash[package_id] && NEURON_CONF.hash[package_id][mod_path];
-  return md5;
+  return NEURON_CONF.hash && NEURON_CONF.hash[package_id] && NEURON_CONF.hash[package_id][mod_path];
 }
 
 
