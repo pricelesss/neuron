@@ -7,7 +7,10 @@ module.exports = {
         callback(1);
     },
     resolve: function(callback){
-    	callback(require.resolve("./range.js"));
+        callback(require.resolve("./range.js"));
+    },
+    resolve_nohash: function(callback){
+        callback(require.resolve("./range_nohash.js"));
     }
 }
 

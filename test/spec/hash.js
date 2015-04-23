@@ -12,10 +12,19 @@ describe("_use()", function() {
 
   it("resolve a path", function(done){
     _use('range', function(range){
-    	range.resolve(function(resolved){
+      range.resolve(function(resolved){
         expect(resolved).to.equal("mod/range/0.0.0/range_bea6bd50.js");
-    		done();
-    	});
+        done();
+      });
+    });
+  });
+
+  it("resolve a path without hash", function(done){
+    _use('range', function(range){
+      range.resolve_nohash(function(resolved){
+        expect(resolved).to.equal("mod/range/0.0.0/range_nohash.js");
+        done();
+      });
     });
   });
 });
