@@ -945,9 +945,7 @@ function create_require(env) {
       // it fails silently
       if (!~path.indexOf('../')) {
         var md5 = get_md5(env.k, path);
-        if(md5){
-          path = append_md5_to_path(path, md5);
-        }
+        path = append_md5_to_path(path, md5);
         return module_id_to_absolute_url(env.k + '/' + path);
       }
     }
@@ -1200,7 +1198,11 @@ function load_by_module(mod) {
 
 function append_md5_to_path(path, md5){
   var ext = path.match(/\.[\w\d]+$/)[0];
-  return path.replace(new RegExp(ext + "$"), "_" + md5 + ext);
+  if(md5){
+    return path.replace(new RegExp(ext + "$"), "_" + md5 + ext);
+  }else{
+    return path;
+  }
 }
 
 function module_to_absolute_url(mod) {
@@ -1223,11 +1225,7 @@ function module_to_absolute_url(mod) {
 
   var origin_url = module_id_to_absolute_url(id);
 
-  if(md5){
-    return append_md5_to_path(origin_url, md5);
-  }else{
-    return origin_url;
-  }
+  return append_md5_to_path(origin_url, md5);
 }
 
 function get_md5(package_id, mod_path){
