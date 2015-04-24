@@ -1355,8 +1355,7 @@ var SETTERS = {
   },
   'hash': justReturn,
   'loaded': justReturn,
-  'graph': justReturn,
-  'cache': justReturn
+  'graph': justReturn
 };
 
 
