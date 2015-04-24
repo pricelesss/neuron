@@ -13,13 +13,11 @@
 'use strict';
 
 var neuron = {
-  version: '7.1.2'
+  version: '7.2.0'
 };
 
 var NULL = null;
 var FALSE = !1;
-
-var timestamp = + new Date;
 
 // // Check and make sure the module is downloaded, 
 // // if not, it will download the module
@@ -576,6 +574,8 @@ function create_require(env) {
       // If user try to resolve a url outside the current package
       // it fails silently
       if (!~path.indexOf('../')) {
+        var md5 = get_md5(env.k, path);
+        path = append_md5_to_path(path, md5);
         return module_id_to_absolute_url(env.k + '/' + path);
       }
     }

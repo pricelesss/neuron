@@ -16,13 +16,11 @@
 'use strict';
 
 var neuron = {
-  version: '7.1.2'
+  version: '7.2.0'
 };
 
 var NULL = null;
 var FALSE = !1;
-
-var timestamp = + new Date;
 
 // // Check and make sure the module is downloaded, 
 // // if not, it will download the module
@@ -944,6 +942,8 @@ function create_require(env) {
       // If user try to resolve a url outside the current package
       // it fails silently
       if (!~path.indexOf('../')) {
+        var md5 = get_md5(env.k, path);
+        path = append_md5_to_path(path, md5);
         return module_id_to_absolute_url(env.k + '/' + path);
       }
     }
@@ -978,7 +978,12 @@ function load_js(src) {
     HEAD.removeChild(node);
   });
 
-  HEAD.insertBefore(node, HEAD.firstChild);
+  // A very tricky way to avoid several problems in iOS webviews, including:
+  // - webpage could not scroll down in iOS6
+  // - could not maintain vertial offset when history goes back.
+  setTimeout(function () {
+    HEAD.insertBefore(node, HEAD.firstChild);
+  }, 0);
 }
 
 
@@ -1132,7 +1137,7 @@ function load_module (module, callback) {
 // 4. require('./path')
 // -> deps on a
 // 5. require.async('a')
-// -> load a.main -> 
+// -> load a.main ->
 // 6. require.async('./path')
 // -> load a/path
 // 7. require.async('b/path'): the entry of a foreign module
@@ -1175,7 +1180,7 @@ function load_by_module(mod) {
 
   if (~loaded.indexOf(evidence)) {
     if (!isAsync) {
-      // If the main entrance of the package is already loaded 
+      // If the main entrance of the package is already loaded
       // and the current module is not an async module, skip loading.
       // see: declaration of `require.async`
       return;
@@ -1189,8 +1194,17 @@ function load_by_module(mod) {
   load_js(module_to_absolute_url(mod));
 }
 
+function append_md5_to_path(path, md5){
+  var ext = path.match(/\.[\w\d]+$/)[0];
+  if(md5){
+    return path.replace(new RegExp(ext + "$"), "_" + md5 + ext);
+  }else{
+    return path;
+  }
+}
 
 function module_to_absolute_url(mod) {
+  var md5 = get_md5(mod.k, mod.main ? (mod.n + ".js") : mod.p.slice(1));
   var id = mod.main
     // if is a main module, we will load the source file by package
 
@@ -1207,7 +1221,13 @@ function module_to_absolute_url(mod) {
     // if is an async module, we will load the source file by module id
     : mod.id;
 
-  return module_id_to_absolute_url(id);
+  var origin_url = module_id_to_absolute_url(id);
+
+  return append_md5_to_path(origin_url, md5);
+}
+
+function get_md5(package_id, mod_path){
+  return NEURON_CONF.hash && NEURON_CONF.hash[package_id] && NEURON_CONF.hash[package_id][mod_path];
 }
 
 
@@ -1219,10 +1239,6 @@ function module_id_to_absolute_url(id) {
   var base = NEURON_CONF.path;
   base || err('config.path must be specified');
   base = base.replace('{n}', pathname.length % 3 + 1);
-
-  pathname += NEURON_CONF.cache === false
-    ? '?f=' + timestamp
-    : '';
 
   return base + pathname;
 }
@@ -1320,7 +1336,7 @@ neuron.ready = ready;
 // var neuron_loaded = [];
 var NEURON_CONF = neuron.conf = {
   loaded: [],
-  // If `config.tree` is not specified, 
+  // If `config.tree` is not specified,
   graph: {
     _: {}
   }
@@ -1332,15 +1348,14 @@ var SETTERS = {
   // The server where loader will fetch modules from
   // if use `'localhost'` as `base`, switch on debug mode
   'path': function(path) {
-    // Make sure 
+    // Make sure
     // - there's one and only one slash at the end
-    // - `conf.path` is a directory 
+    // - `conf.path` is a directory
     return path.replace(/\/*$/, '/');
   },
-
+  'hash': justReturn,
   'loaded': justReturn,
-  'graph': justReturn,
-  'cache': justReturn
+  'graph': justReturn
 };
 
 
