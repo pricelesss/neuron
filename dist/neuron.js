@@ -22,8 +22,6 @@ var neuron = {
 var NULL = null;
 var FALSE = !1;
 
-var timestamp = + new Date;
-
 // // Check and make sure the module is downloaded, 
 // // if not, it will download the module
 // neuron.load = function (module, callback){
@@ -1241,11 +1239,6 @@ function module_id_to_absolute_url(id) {
   var base = NEURON_CONF.path;
   base || err('config.path must be specified');
   base = base.replace('{n}', pathname.length % 3 + 1);
-
-  pathname += NEURON_CONF.cache === false
-    ? '?f=' + timestamp
-    : '';
-
 
   return base + pathname;
 }
